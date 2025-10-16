@@ -1,0 +1,25 @@
+
+FROM python:3.12-slim
+
+# Update package lists and set non-interactive mode to avoid prompts
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libgomp1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy your requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip --default-timeout=100 install -r requirements.txt
+
+# Copy your application code
+COPY . .
+
+# Command to run your application
+CMD ["python", "write_analytics1.py"]
