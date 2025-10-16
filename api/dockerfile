@@ -1,0 +1,26 @@
+# Stage 1: Build stage
+FROM python:3.12-alpine AS builder
+WORKDIR /app
+
+# Install build dependencies and Python packages
+RUN apk add --no-cache gcc musl-dev python3-dev libffi-dev
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --target /install
+
+# Stage 2: Final lightweight image
+FROM python:3.12-alpine
+WORKDIR /app
+
+# Install runtime system dependencies (if needed)
+RUN apk add --no-cache libffi libstdc++ libgcc
+
+# Set PYTHONPATH so the interpreter finds the installed packages
+ENV PYTHONPATH="/app"
+
+# Copy installed packages and your application
+COPY --from=builder /install /anprapp
+COPY prayagraj_anpr_api.py .
+COPY requirements.txt .
+
+# Run your app
+CMD ["python", "vms_api_.py"]
