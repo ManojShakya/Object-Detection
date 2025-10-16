@@ -1,0 +1,76 @@
+# FROM python:3.12-slim
+
+# # Update package lists and set non-interactive mode to avoid prompts
+# RUN apt-get update && \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y \
+#     libgl1-mesa-glx \
+#     libglib2.0-0 \
+#     libgomp1 && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# # Set working directory
+# WORKDIR /app
+
+# # Copy your requirements file
+# COPY requirements.txt .
+
+# # Install Python dependencies
+# RUN pip --default-timeout=100 install -r requirements.txt
+
+# # Copy your application code
+# COPY . .
+
+# # Command to run your application
+# CMD ["python", "face_recognition_frame_sender.py"]
+
+
+# # Stage 1: Build dependencies
+# FROM python:3.12-slim AS builder
+# WORKDIR /rdas_framer
+
+# # Install dependencies
+# RUN apt-get update && \
+#     apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 libgomp1 && \
+#     rm -rf /var/lib/apt/lists/*
+
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt -t /dependencies
+
+# # Stage 2: Final image
+# FROM python:3.12-slim
+# WORKDIR /rdas_framer
+
+# # Copy only necessary dependencies
+# COPY --from=builder /dependencies /rdas_framer
+# COPY . .
+
+# CMD ["python", "rdas_frame_sender_multi_user.py"]
+
+
+# Stage 1: Build dependencies
+FROM python:3.12-slim AS builder
+WORKDIR /rdas_framer
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt -t /dependencies
+
+# Stage 2: Final image
+FROM python:3.12-slim
+WORKDIR /rdas_framer
+
+# Install system dependencies required by OpenCV
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy only necessary dependencies
+COPY --from=builder /dependencies /rdas_framer
+COPY prayagraj_framer.py .
+COPY requirements.txt .
+
+CMD ["python", "prayagraj_framer.py"]
