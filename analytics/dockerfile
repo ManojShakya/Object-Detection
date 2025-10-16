@@ -1,0 +1,32 @@
+
+FROM python:3.12-slim
+
+# Update package lists and set non-interactive mode to avoid prompts
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libgomp1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy your requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip --default-timeout=100 install -r requirements.txt
+
+# Copy your custom YOLOv8 model to the container
+COPY yolov8s.pt /app/yolov8s.pt
+COPY hemletYoloV8_100epochs.pt /app/hemletYoloV8_100epochs.pt
+COPY belt_mobile_65v8s_best.pt /app/belt_mobile_65v8s_best.pt
+COPY Fall_detectorv8.pt /app/Fall_detectorv8.pt
+COPY fire_smoke_detectorv8.pt /app/fire_smoke_detectorv8.pt
+
+# Copy your application code
+COPY . .
+
+# Command to run your application
+CMD ["python", "vms_video_analytics.py"]
